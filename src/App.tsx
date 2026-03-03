@@ -270,82 +270,90 @@ export default function App() {
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <FileSearch className="w-6 h-6 text-white" />
+      <header className="bg-white border-b border-[#D4AF37]/20 px-8 py-5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="bg-[#1A2B4B] p-2.5 rounded-lg shadow-inner">
+            <FileSearch className="w-6 h-6 text-[#D4AF37]" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">Légiscribe OCR</h1>
-            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Assistant de transcription juridique</p>
+            <h1 className="text-2xl font-serif font-bold text-[#1A2B4B] tracking-tight">Légiscribe OCR</h1>
+            <p className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.2em]">Assistant de transcription juridique</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs font-mono text-zinc-400 bg-zinc-100 px-2 py-1 rounded">v1.0.0</span>
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-[10px] font-serif italic text-zinc-400">Ex officio</span>
+            <span className="text-xs font-medium text-zinc-500">v1.0.0</span>
+          </div>
+          <div className="w-px h-8 bg-zinc-100" />
+          <div className="bg-zinc-50 border border-zinc-100 rounded-full px-3 py-1 flex items-center gap-2">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Serveur Actif</span>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-6xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column: Input */}
-        <div className="space-y-6">
-          <section className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Document Source
+        <div className="space-y-8">
+          <section className="bg-white rounded-2xl border border-zinc-200 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="p-5 border-b border-zinc-100 bg-[#FDFCF9] flex items-center justify-between">
+              <h2 className="text-sm font-serif font-bold text-[#1A2B4B] flex items-center gap-2">
+                <Upload className="w-4 h-4 text-[#D4AF37]" />
+                Source du Document
               </h2>
               {files.length > 0 && (
                 <button 
                   onClick={reset}
-                  className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1 transition-colors"
+                  className="text-[10px] text-zinc-400 hover:text-red-600 font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="w-3.5 h-3.5" />
                   Réinitialiser
                 </button>
               )}
             </div>
             
-            <div className="p-6">
+            <div className="p-8">
               {files.length === 0 ? (
                 <div 
                   {...getRootProps()} 
                   className={cn(
-                    "border-2 border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center transition-all cursor-pointer",
-                    isDragActive ? "border-indigo-500 bg-indigo-50/50" : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                    "border-2 border-dashed rounded-2xl p-16 flex flex-col items-center justify-center text-center transition-all cursor-pointer",
+                    isDragActive ? "border-[#D4AF37] bg-[#FDFCF9]" : "border-zinc-100 hover:border-[#D4AF37]/50 hover:bg-[#FDFCF9]/50"
                   )}
                 >
                   <input {...getInputProps()} />
-                  <div className="bg-zinc-100 p-4 rounded-full mb-4">
-                    <Upload className="w-8 h-8 text-zinc-400" />
+                  <div className="bg-zinc-50 p-5 rounded-full mb-6 shadow-inner">
+                    <Upload className="w-10 h-10 text-zinc-300" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-900 mb-1">
-                    {isDragActive ? "Déposez le fichier ici" : "Déposez un document ou cliquez pour parcourir"}
+                  <h3 className="text-base font-serif font-bold text-[#1A2B4B] mb-2">
+                    {isDragActive ? "Déposez le folio ici" : "Déposez un document ou cliquez pour parcourir"}
                   </h3>
-                  <p className="text-xs text-zinc-500 max-w-xs">
-                    Prend en charge les images (JPG, PNG, WebP) et les PDF (jusqu'à 20 pages). Idéal pour les archives Gallica.
+                  <p className="text-xs text-zinc-400 max-w-xs leading-relaxed">
+                    Images (JPG, PNG) ou PDF (jusqu'à 20 pages).<br/>Optimisé pour les archives de la Bibliothèque Nationale.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="relative aspect-[3/4] bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 group">
+                <div className="space-y-6">
+                  <div className="relative aspect-[3/4] bg-[#FDFCF9] rounded-2xl overflow-hidden border border-zinc-100 shadow-inner group">
                     {previews[0] ? (
                       <img 
                         src={previews[0]} 
                         alt="Preview" 
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain p-4"
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400">
-                        <FileText className="w-12 h-12 mb-2" />
-                        <span className="text-xs font-medium">Aperçu non disponible</span>
+                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-300">
+                        <FileText className="w-16 h-16 mb-4 opacity-20" />
+                        <span className="text-xs font-serif italic">Aperçu en cours de chargement...</span>
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity flex justify-between items-end">
-                      <p className="text-white text-xs font-medium truncate flex-1 mr-2">{files[0].name}</p>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1A2B4B]/80 to-transparent p-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex justify-between items-end">
+                      <p className="text-white text-xs font-medium truncate flex-1 mr-4">{files[0].name}</p>
                       {pdfPageCount > 1 && (
-                        <span className="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-full border border-white/30">
-                          {pdfPageCount} pages
+                        <span className="bg-[#D4AF37] text-[#1A2B4B] text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
+                          {pdfPageCount} PAGES
                         </span>
                       )}
                     </div>
@@ -355,21 +363,21 @@ export default function App() {
                     onClick={processOCR}
                     disabled={isProcessing}
                     className={cn(
-                      "w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-sm",
+                      "w-full py-4 rounded-xl font-serif font-bold text-base flex items-center justify-center gap-3 transition-all shadow-md",
                       isProcessing 
                         ? "bg-zinc-100 text-zinc-400 cursor-not-allowed" 
-                        : "bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98]"
+                        : "bg-[#1A2B4B] text-white hover:bg-[#243B6B] active:scale-[0.98] hover:shadow-lg"
                     )}
                   >
                     {isProcessing ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Transcription ({pdfPageCount} {pdfPageCount > 1 ? 'pages' : 'page'})...
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Analyse du manuscrit...
                       </>
                     ) : (
                       <>
-                        <FileSearch className="w-4 h-4" />
-                        Lancer l'OCR
+                        <FileSearch className="w-5 h-5 text-[#D4AF37]" />
+                        Lancer la Transcription
                       </>
                     )}
                   </button>
@@ -378,23 +386,13 @@ export default function App() {
             </div>
           </section>
 
-          {error && (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-semibold text-red-900">Erreur</h4>
-                <p className="text-xs text-red-700 mt-1">{error}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-indigo-900 flex items-center gap-2 mb-2">
-              <ImageIcon className="w-4 h-4" />
-              Conseil Gallica
+          <div className="bg-[#1A2B4B] border-l-4 border-[#D4AF37] rounded-r-2xl p-5 shadow-sm">
+            <h4 className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2 mb-2">
+              <ImageIcon className="w-3.5 h-3.5" />
+              Note de Recherche
             </h4>
-            <p className="text-xs text-indigo-700 leading-relaxed">
-              Pour de meilleurs résultats, utilisez des captures d'écran haute résolution. Si vous rencontrez une erreur de taille avec un PDF long, essayez de le traiter par tranches de 5 à 10 pages.
+            <p className="text-xs text-zinc-300 leading-relaxed font-serif italic">
+              "Pour une précision optimale sur les textes du XIXe et début XXe siècle, privilégiez les scans contrastés de Gallica."
             </p>
           </div>
 
@@ -434,97 +432,91 @@ export default function App() {
         </div>
 
         {/* Right Column: Results */}
-        <div className="space-y-6">
-          <section className="bg-white rounded-2xl border border-zinc-200 shadow-sm h-full flex flex-col min-h-[600px]">
-            <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between shrink-0">
-              <h2 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Texte Extrait
+        <div className="space-y-8">
+          <section className="bg-white rounded-2xl border border-zinc-200 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] h-full flex flex-col min-h-[700px] transition-all">
+            <div className="p-5 border-b border-zinc-100 bg-[#FDFCF9] flex items-center justify-between shrink-0">
+              <h2 className="text-sm font-serif font-bold text-[#1A2B4B] flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#D4AF37]" />
+                Transcription du Folio
               </h2>
               {result && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button 
                     onClick={generateCitation}
-                    className="p-2 hover:bg-indigo-50 rounded-lg transition-colors text-indigo-600 relative group"
-                    title="Générer citation"
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 rounded-lg transition-colors text-[#1A2B4B] text-[10px] font-bold uppercase tracking-wider border border-zinc-100"
                   >
-                    <FileSearch className="w-4 h-4" />
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Citer
-                    </span>
+                    <FileSearch className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    Citer
                   </button>
+                  <div className="w-px h-4 bg-zinc-200" />
                   <button 
                     onClick={copyToClipboard}
-                    className="p-2 hover:bg-zinc-200 rounded-lg transition-colors text-zinc-600 relative group"
-                    title="Copier le texte"
+                    className="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-500 relative group"
                   >
                     {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      {copied ? 'Copié !' : 'Copier'}
-                    </span>
                   </button>
                   <button 
                     onClick={downloadText}
-                    className="p-2 hover:bg-zinc-200 rounded-lg transition-colors text-zinc-600 relative group"
-                    title="Télécharger .md"
+                    className="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-500 relative group"
                   >
                     <Download className="w-4 h-4" />
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Télécharger (.md)
-                    </span>
                   </button>
                 </div>
               )}
             </div>
             
-            <div className="flex-1 p-6 overflow-y-auto relative">
+            <div className="flex-1 p-10 overflow-y-auto relative bg-[#FDFCF9]/30">
               {showCitation && (
-                <div className="mb-6 p-3 bg-indigo-50 border border-indigo-100 rounded-lg animate-in fade-in zoom-in duration-300">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Référence suggérée</span>
-                    <button onClick={() => setShowCitation(false)} className="text-indigo-400 hover:text-indigo-600">
-                      <Trash2 className="w-3 h-3" />
+                <div className="mb-10 p-5 bg-[#1A2B4B] border-l-4 border-[#D4AF37] rounded-r-xl animate-in fade-in slide-in-from-top-4 duration-500 shadow-md">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[9px] font-bold text-[#D4AF37] uppercase tracking-[0.2em]">Référence Bibliographique</span>
+                    <button onClick={() => setShowCitation(false)} className="text-zinc-400 hover:text-white transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <p className="text-xs font-serif italic text-indigo-900">{citation}</p>
+                  <p className="text-sm font-serif italic text-zinc-100 leading-relaxed">{citation}</p>
                 </div>
               )}
 
               {!result && !isProcessing && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 p-8 text-center">
-                  <div className="bg-zinc-50 p-6 rounded-full mb-4">
-                    <FileText className="w-12 h-12 opacity-20" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-300 p-12 text-center">
+                  <div className="bg-zinc-50 p-8 rounded-full mb-6 shadow-inner opacity-40">
+                    <FileText className="w-16 h-16" />
                   </div>
-                  <p className="text-sm font-medium">Le texte extrait apparaîtra ici après le traitement.</p>
-                  <p className="text-xs mt-2 max-w-[240px]">Chargez un document et cliquez sur "Lancer l'OCR" pour commencer.</p>
+                  <p className="text-base font-serif italic text-zinc-400">Le texte transcrit apparaîtra ici...</p>
+                  <p className="text-[10px] mt-4 uppercase tracking-[0.15em] font-bold opacity-30">En attente de document</p>
                 </div>
               )}
 
               {isProcessing && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-10">
-                  <div className="relative">
-                    <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md z-10">
+                  <div className="relative mb-6">
+                    <Loader2 className="w-16 h-16 text-[#1A2B4B] animate-spin opacity-20" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-indigo-600 rounded-full animate-ping" />
+                      <FileSearch className="w-6 h-6 text-[#D4AF37] animate-pulse" />
                     </div>
                   </div>
-                  <p className="text-sm font-semibold text-zinc-900 mt-4">Analyse du document...</p>
-                  <p className="text-xs text-zinc-500 mt-1">Gemini extrait les caractères et la structure.</p>
+                  <p className="text-lg font-serif font-bold text-[#1A2B4B]">Examen du document...</p>
+                  <p className="text-xs text-zinc-400 mt-2 font-serif italic">Extraction de la substance juridique en cours</p>
                 </div>
               )}
 
               {result && (
-                <div className="markdown-body animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="markdown-body animate-in fade-in slide-in-from-bottom-4 duration-700">
                   <Markdown>{result.text}</Markdown>
                 </div>
               )}
             </div>
 
             {result && (
-              <div className="p-4 border-t border-zinc-100 bg-zinc-50/30 shrink-0">
-                <p className="text-[10px] text-zinc-400 font-mono text-center">
-                  Extrait le {new Date(result.timestamp).toLocaleString('fr-FR')} • Source: {result.fileName}
-                </p>
+              <div className="p-5 border-t border-zinc-100 bg-[#FDFCF9] shrink-0">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="h-px w-12 bg-zinc-200" />
+                  <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-[0.2em]">
+                    Fin de la Transcription
+                  </p>
+                  <div className="h-px w-12 bg-zinc-200" />
+                </div>
               </div>
             )}
           </section>
@@ -532,10 +524,15 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-zinc-200 px-6 py-4 text-center">
-        <p className="text-xs text-zinc-500">
-          Propulsé par Gemini 3 Flash • Optimisé pour les documents juridiques et archives historiques.
-        </p>
+      <footer className="bg-white border-t border-[#D4AF37]/10 px-8 py-6 text-center">
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em]">
+            Légiscribe OCR • Laboratoire de Recherche Juridique
+          </p>
+          <p className="text-[10px] text-zinc-300 italic font-serif">
+            Propulsé par Gemini 3 Flash • Optimisé pour les archives historiques de Gallica
+          </p>
+        </div>
       </footer>
     </div>
   );

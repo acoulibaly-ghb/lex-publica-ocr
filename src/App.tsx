@@ -5,7 +5,6 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { GoogleGenAI } from "@google/genai"; // Gardé pour compatibilité, mais non utilisé
 import {
   FileText,
   Upload,

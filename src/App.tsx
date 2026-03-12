@@ -16,12 +16,18 @@ import {
   FileSearch,
   Download,
   Trash2,
-  Languages
+  Languages,
+  FileDown
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Markdown from 'react-markdown';
 import * as pdfjsLib from 'pdfjs-dist';
+
+// Bibliothèques pour l'export
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { jsPDF } from 'jspdf';
+import { saveAs } from 'file-saver';
 
 // Configuration du worker PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -142,10 +148,8 @@ export default function App() {
       if (files[0].type === 'application/pdf') {
         if (previews.length === 0) throw new Error("Aperçu manquant.");
         
-        // FILTRAGE BILINGUE : On filtre les pages selon le mode choisi
         previews.forEach((preview, index) => {
-          const isOdd = index % 2 === 0; // Page 1, 3, 5... (index 0, 2, 4)
-          
+          const isOdd = index % 2 === 0;
           if (extractionMode === 'fr' && !isOdd) return; 
           if (extractionMode === 'en' && isOdd) return;
 
@@ -168,18 +172,18 @@ export default function App() {
         }
       }
 
-      if (parts.length === 0) throw new Error("Aucune page sélectionnée pour l'analyse.");
+      if (parts.length === 0) throw new Error("Aucune page sélectionnée.");
 
       const response = await ai.models.generateContent({
         model,
         contents: {
           parts: [
             ...parts,
-            { text: "Extract all text from these document pages accurately. Maintain the structure and formatting. Preserve articles, dates, and signatures. Output only Markdown text. Combine pages into a single continuous document." }
+            { text: "Extract all text from these document pages accurately. Maintain structure. Preserve articles, dates, and signatures. Output only Markdown. Combine pages." }
           ]
         },
         config: {
-          systemInstruction: "You are an expert OCR assistant for historical legal documents. Provide highly accurate text extraction. Maintain original structure (tables, headings). Sequential document output."
+          systemInstruction: "You are an expert legal OCR assistant. Provide high-fidelity text extraction. Keep original headings and layout. Output sequence as one document."
         }
       });
 
@@ -218,15 +222,39 @@ export default function App() {
     }
   };
 
-  const downloadText = () => {
-    if (result) {
+  // LOGIQUE D'EXPORT MULTI-FORMAT
+  const downloadAsFormat = async (format: 'md' | 'docx' | 'pdf') => {
+    if (!result) return;
+    const baseFileName = `${result.fileName.split('.')[0]}_transcription`;
+
+    if (format === 'md') {
       const blob = new Blob([result.text], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${result.fileName.split('.')[0]}_ocr.md`;
-      a.click();
-      URL.revokeObjectURL(url);
+      saveAs(blob, `${baseFileName}.md`);
+    } 
+    
+    else if (format === 'docx') {
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: result.text.split('\n').map(line => 
+            new Paragraph({
+              children: [new TextRun({ text: line, font: "Times New Roman", size: 24 })],
+              spacing: { after: 200 }
+            })
+          ),
+        }],
+      });
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `${baseFileName}.docx`);
+    } 
+    
+    else if (format === 'pdf') {
+      const doc = new jsPDF();
+      const splitText = doc.splitTextToSize(result.text, 180);
+      doc.setFont("times", "normal");
+      doc.setFontSize(11);
+      doc.text(splitText, 15, 20);
+      doc.save(`${baseFileName}.pdf`);
     }
   };
 
@@ -242,17 +270,17 @@ export default function App() {
     <div className="min-h-screen bg-zinc-50 flex flex-col">
       <header className="bg-white border-b border-[#D4AF37]/20 px-8 py-5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="bg-[#1A2B4B] p-2.5 rounded-lg">
+          <div className="bg-[#1A2B4B] p-2.5 rounded-lg shadow-inner">
             <FileSearch className="w-6 h-6 text-[#D4AF37]" />
           </div>
           <div>
-            <h1 className="text-2xl font-serif font-bold text-[#1A2B4B]">Légiscribe OCR</h1>
+            <h1 className="text-2xl font-serif font-bold text-[#1A2B4B] tracking-tight">Légiscribe OCR</h1>
             <p className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.2em]">Assistant de transcription juridique</p>
           </div>
         </div>
         <div className="bg-zinc-50 border border-zinc-100 rounded-full px-3 py-1 flex items-center gap-2">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="text-[10px] font-bold text-zinc-400 uppercase">Serveur Actif</span>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Serveur Actif</span>
         </div>
       </header>
 
@@ -272,11 +300,13 @@ export default function App() {
             
             <div className="p-8">
               {files.length === 0 ? (
-                <div {...getRootProps()} className={cn("border-2 border-dashed rounded-2xl p-16 flex flex-col items-center text-center cursor-pointer", isDragActive ? "border-[#D4AF37] bg-[#FDFCF9]" : "border-zinc-100 hover:border-[#D4AF37]/50")}>
+                <div {...getRootProps()} className={cn("border-2 border-dashed rounded-2xl p-16 flex flex-col items-center text-center cursor-pointer transition-all", isDragActive ? "border-[#D4AF37] bg-[#FDFCF9]" : "border-zinc-100 hover:border-[#D4AF37]/50")}>
                   <input {...getInputProps()} />
-                  <Upload className="w-10 h-10 text-zinc-300 mb-6" />
-                  <h3 className="text-base font-serif font-bold text-[#1A2B4B] mb-2">Déposez un document ou cliquez</h3>
-                  <p className="text-xs text-zinc-400 max-w-xs">PDF bilingues (CPJI) ou scans Gallica jusqu'à 20 pages.</p>
+                  <div className="bg-zinc-50 p-5 rounded-full mb-6">
+                    <Upload className="w-10 h-10 text-zinc-300" />
+                  </div>
+                  <h3 className="text-base font-serif font-bold text-[#1A2B4B] mb-2">Déposez un document CPJI ou Gallica</h3>
+                  <p className="text-xs text-zinc-400 max-w-xs leading-relaxed">Images (JPG, PNG) ou PDF.<br/>Filtrage bilingue automatique disponible.</p>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -284,31 +314,31 @@ export default function App() {
                     {previews[0] ? (
                       <img src={previews[0]} alt="Preview" className="w-full h-full object-contain p-4" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-300">Chargement...</div>
+                      <div className="w-full h-full flex items-center justify-center text-zinc-300">Génération de l'aperçu...</div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 bg-[#1A2B4B]/80 p-4 flex justify-between items-center">
-                      <p className="text-white text-[10px] truncate max-w-[150px]">{files[0].name}</p>
-                      <span className="bg-[#D4AF37] text-[#1A2B4B] text-[10px] font-bold px-2 py-0.5 rounded-full">{pdfPageCount} PAGES</span>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1A2B4B]/90 to-transparent p-6 flex justify-between items-end">
+                      <p className="text-white text-xs font-medium truncate flex-1 mr-4">{files[0].name}</p>
+                      <span className="bg-[#D4AF37] text-[#1A2B4B] text-[10px] font-bold px-3 py-1 rounded-full">{pdfPageCount} PAGES</span>
                     </div>
                   </div>
 
-                  {/* SÉLECTEUR DE MODE CPJI / BILINGUE */}
+                  {/* SÉLECTEUR DE MODE CPJI */}
                   {pdfPageCount > 1 && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-[#1A2B4B] uppercase tracking-wider flex items-center gap-2">
-                        <Languages className="w-3 h-3 text-[#D4AF37]" /> Mode d'extraction (Structure CPJI)
+                    <div className="space-y-3 bg-[#FDFCF9] p-4 rounded-xl border border-zinc-100 shadow-inner">
+                      <label className="text-[10px] font-bold text-[#1A2B4B] uppercase tracking-widest flex items-center gap-2">
+                        <Languages className="w-3.5 h-3.5 text-[#D4AF37]" /> Structure du document bilingue
                       </label>
-                      <div className="flex bg-zinc-100 p-1 rounded-xl gap-1">
+                      <div className="flex bg-zinc-200/50 p-1 rounded-lg gap-1">
                         {(['all', 'fr', 'en'] as ExtractionMode[]).map((mode) => (
                           <button
                             key={mode}
                             onClick={() => setExtractionMode(mode)}
                             className={cn(
-                              "flex-1 py-2 text-[10px] font-bold uppercase rounded-lg transition-all",
-                              extractionMode === mode ? "bg-white shadow-sm text-[#1A2B4B]" : "text-zinc-400 hover:text-zinc-600"
+                              "flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all",
+                              extractionMode === mode ? "bg-white shadow-sm text-[#1A2B4B]" : "text-zinc-500 hover:text-zinc-700"
                             )}
                           >
-                            {mode === 'all' ? 'Complet' : mode === 'fr' ? 'Français (1,3,5...)' : 'Anglais (2,4,6...)'}
+                            {mode === 'all' ? 'Complet' : mode === 'fr' ? 'FR (1, 3, 5...)' : 'EN (2, 4, 6...)'}
                           </button>
                         ))}
                       </div>
@@ -318,48 +348,79 @@ export default function App() {
                   <button
                     onClick={processOCR}
                     disabled={isProcessing}
-                    className={cn("w-full py-4 rounded-xl font-serif font-bold text-base flex items-center justify-center gap-3 transition-all shadow-md", isProcessing ? "bg-zinc-100 text-zinc-400" : "bg-[#1A2B4B] text-white hover:bg-[#243B6B]")}
+                    className={cn("w-full py-4 rounded-xl font-serif font-bold text-base flex items-center justify-center gap-3 transition-all shadow-md", isProcessing ? "bg-zinc-100 text-zinc-400" : "bg-[#1A2B4B] text-white hover:bg-[#243B6B] active:scale-[0.98]")}
                   >
-                    {isProcessing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyse...</> : <><FileSearch className="w-5 h-5 text-[#D4AF37]" /> Lancer la Transcription</>}
+                    {isProcessing ? <><Loader2 className="w-5 h-5 animate-spin" /> Analyse du manuscrit...</> : <><FileSearch className="w-5 h-5 text-[#D4AF37]" /> Lancer la Transcription</>}
                   </button>
                 </div>
               )}
             </div>
           </section>
 
-          <div className="bg-[#1A2B4B] border-l-4 border-[#D4AF37] rounded-r-2xl p-5">
+          <div className="bg-[#1A2B4B] border-l-4 border-[#D4AF37] rounded-r-2xl p-5 shadow-sm">
             <h4 className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2 mb-2">
               <ImageIcon className="w-3.5 h-3.5" /> Note de Recherche
             </h4>
             <p className="text-xs text-zinc-300 leading-relaxed font-serif italic">
-              "En mode bilingue, Légiscribe ignore automatiquement les pages de la langue opposée pour éviter les textes entrelacés."
+              "Le mode bilingue optimise l'extraction en ignorant les pages miroirs, idéal pour les archives de la CPJI entre 1922 et 1946."
             </p>
           </div>
         </div>
 
         <div className="space-y-8">
           <section className="bg-white rounded-2xl border border-zinc-200 shadow-sm flex flex-col min-h-[700px]">
-            <div className="p-5 border-b border-zinc-100 bg-[#FDFCF9] flex items-center justify-between">
+            <div className="p-5 border-b border-zinc-100 bg-[#FDFCF9] flex items-center justify-between shrink-0">
               <h2 className="text-sm font-serif font-bold text-[#1A2B4B] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#D4AF37]" /> Transcription du Folio
               </h2>
               {result && (
-                <div className="flex items-center gap-2">
-                  <button onClick={generateCitation} className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-500"><FileSearch className="w-4 h-4 text-[#D4AF37]" /></button>
-                  <button onClick={copyToClipboard} className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-500">{copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}</button>
-                  <button onClick={downloadText} className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-500"><Download className="w-4 h-4" /></button>
+                <div className="flex items-center gap-3">
+                  <button onClick={generateCitation} className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-500 transition-colors" title="Citer">
+                    <FileSearch className="w-4 h-4 text-[#D4AF37]" />
+                  </button>
+                  <button onClick={copyToClipboard} className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-500 transition-colors" title="Copier">
+                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  
+                  {/* BOUTONS D'EXPORT */}
+                  <div className="h-6 w-px bg-zinc-200 mx-1" />
+                  <div className="flex bg-zinc-50 p-1 rounded-lg border border-zinc-100 gap-1">
+                    <button onClick={() => downloadAsFormat('md')} className="px-2 py-1 text-[9px] font-black text-zinc-400 hover:text-[#1A2B4B] hover:bg-white rounded transition-all">MD</button>
+                    <button onClick={() => downloadAsFormat('docx')} className="px-2 py-1 text-[9px] font-black text-zinc-400 hover:text-[#1A2B4B] hover:bg-white rounded transition-all">DOCX</button>
+                    <button onClick={() => downloadAsFormat('pdf')} className="px-2 py-1 text-[9px] font-black text-zinc-400 hover:text-[#1A2B4B] hover:bg-white rounded transition-all">PDF</button>
+                  </div>
                 </div>
               )}
             </div>
             
             <div className="flex-1 p-10 overflow-y-auto relative bg-[#FDFCF9]/30">
               {showCitation && (
-                <div className="mb-6 p-4 bg-[#1A2B4B] border-l-4 border-[#D4AF37] rounded-r-xl text-white">
-                  <p className="text-sm font-serif italic">{citation}</p>
+                <div className="mb-8 p-5 bg-[#1A2B4B] border-l-4 border-[#D4AF37] rounded-r-xl shadow-md text-white animate-in slide-in-from-top-4 duration-500">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[9px] font-bold text-[#D4AF37] uppercase tracking-widest">Référence Bibliographique</span>
+                    <button onClick={() => setShowCitation(false)}><Trash2 className="w-3 h-3 text-zinc-400 hover:text-white" /></button>
+                  </div>
+                  <p className="text-sm font-serif italic text-zinc-100">{citation}</p>
                 </div>
               )}
-              {isProcessing && <div className="absolute inset-0 flex items-center justify-center bg-white/80"><Loader2 className="w-10 h-10 animate-spin text-[#1A2B4B]" /></div>}
-              {result ? <div className="markdown-body"><Markdown>{result.text}</Markdown></div> : <p className="text-center text-zinc-300 font-serif italic py-20">Le texte apparaîtra ici...</p>}
+
+              {isProcessing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-10">
+                  <Loader2 className="w-12 h-12 animate-spin text-[#1A2B4B] opacity-20" />
+                  <p className="text-sm font-serif font-bold text-[#1A2B4B] mt-4">Examen du corpus juridique...</p>
+                </div>
+              )}
+
+              {result ? (
+                <div className="markdown-body prose prose-zinc max-w-none">
+                  <Markdown>{result.text}</Markdown>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-zinc-300 opacity-40 py-20">
+                  <FileDown className="w-16 h-16 mb-4" />
+                  <p className="text-base font-serif italic">Prêt pour la transcription...</p>
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -367,6 +428,7 @@ export default function App() {
 
       <footer className="bg-white border-t border-[#D4AF37]/10 px-8 py-6 text-center">
         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em]">Légiscribe OCR • Laboratoire de Recherche Juridique</p>
+        <p className="text-[9px] text-zinc-300 italic font-serif mt-1">Multi-format Export Enabled (MD, DOCX, PDF)</p>
       </footer>
     </div>
   );
